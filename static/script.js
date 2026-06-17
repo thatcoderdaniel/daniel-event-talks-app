@@ -45,6 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Keyboard Shortcut: press '/' to search
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement !== searchInput) {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+    });
+
     // Parse RSS HTML content into typed items
     function parseEntryContent(contentHtml) {
         const tempDiv = document.createElement('div');
@@ -168,8 +177,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     </svg>
                     <h4>No Release Notes Found</h4>
                     <p>Try refining your search or filter categories.</p>
+                    <button id="clear-search-btn" class="btn btn-secondary" style="margin-top: 16px;">Clear Filters & Search</button>
                 </div>
             `;
+            
+            // Attach Clear button event listener
+            document.getElementById('clear-search-btn').addEventListener('click', () => {
+                searchInput.value = '';
+                searchQuery = '';
+                activeFilter = 'all';
+                filterButtons.forEach(b => {
+                    if (b.dataset.filter === 'all') b.classList.add('active');
+                    else b.classList.remove('active');
+                });
+                renderFeed();
+            });
             return;
         }
 
@@ -218,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                                 </svg>
-                                Copy
+                                <span class="copy-text">Copy</span>
                             </button>
                             <button class="btn-tweet" title="Share this update on X / Twitter">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
@@ -234,9 +256,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 
                 // Copy Button Event
-                card.querySelector('.btn-copy').addEventListener('click', () => {
+                const copyBtn = card.querySelector('.btn-copy');
+                copyBtn.addEventListener('click', () => {
                     navigator.clipboard.writeText(item.textContent.replace(/\s+/g, ' ').trim());
                     showToast('Copied to clipboard!');
+                    
+                    // Visual Copy Feedback
+                    const originalHTML = copyBtn.innerHTML;
+                    copyBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span style="color: #10b981;">Copied!</span>
+                    `;
+                    copyBtn.disabled = true;
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalHTML;
+                        copyBtn.disabled = false;
+                    }, 2000);
                 });
 
                 // Tweet Button Event
