@@ -1,81 +1,81 @@
-# ⚡️ BigQuery Release Explorer
+# BigQuery Release Explorer
 
-An elegant, real-time web dashboard to explore, search, bookmark, and share Google Cloud BigQuery release notes. Built using Python Flask and vanilla HTML, CSS, and JavaScript.
+A lightweight, real-time dashboard application designed to parse, aggregate, search, and export Google Cloud BigQuery release logs. Built on a Flask backend with a decoupled vanilla HTML5/JS/CSS3 frontend.
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
-| Feature | Description |
+| Feature | Technical Description |
 | :--- | :--- |
-| **🔄 Live Feed Ingestion** | Real-time parsing of the official Google Cloud BigQuery RSS/Atom feed. |
-| **🏷️ Micro-Parsing** | Splits daily bulk updates into individual, color-coded item cards (Features, Issues, Announcements, Deprecations). |
-| **🔍 Search & Filter** | Live client-side full-text search and category filtering with instantaneous response. |
-| **🌓 Theme Toggle** | Smooth transition between premium Light and Dark modes, with automatic preference preservation. |
-| **📋 Copy to Clipboard** | Quick, single-click copy of clean release note text with direct inline feedback. |
-| **📥 Export to CSV** | Download the currently filtered list of release updates in a formatted CSV file. |
-| **⭐️ Bookmarking System** | Star individual release notes to save them for later review, persisted locally. |
-| **🕒 Relative Dates** | Contextual date headers showing `(Today)`, `(Yesterday)`, or `(x days ago)`. |
-| **📡 Offline Cache** | Automatic fallback to offline storage if Google Cloud feeds or connections are unavailable. |
-| **🐦 X (Twitter) Share** | Pre-formatted sharing intents that handle Twitter text length limits and link back to Google Cloud Docs. |
+| **Live Feed Ingestion** | Asynchronous XML ingestion and parser mapping for official RSS/Atom documents. |
+| **Micro-Parsing** | Extracts atomic log segments from bulk day entries based on document boundaries (Features, Issues, Announcements, Deprecations). |
+| **Search & Filter** | Low-latency client-side indexing for keyword queries and state-based category filtering. |
+| **Theme Toggle** | Interoperable Light/Dark scheme selector with local state persistence. |
+| **Copy to Clipboard** | Clipboard API integration providing direct copy commands and visual state feedback. |
+| **Export to CSV** | Local MIME-type Blob generation to export filtered logs directly to local storage. |
+| **Bookmarking System** | Persistent bookmark state stored in local browser state. |
+| **Relative Dates** | Dynamic time-difference calculations rendering relative date offsets (Today, Yesterday, x days ago). |
+| **Offline Cache** | Local fallback buffer mapping cached feed logs when network fetch operations fail. |
+| **External Sharing** | Sanitized Web Intent routing mapping documentation links and snippet lengths to standard X sharing criteria. |
 
 ---
 
-## 🛠️ Tech Stack
+## Technical Stack
 
-- **Backend:** Python 3, Flask
-- **Frontend:** HTML5, Vanilla JavaScript (ES6+), Custom CSS3 variables
-- **Data Source:** Official BigQuery Release Notes RSS Feed
+- **Backend Run-time:** Python 3, Flask
+- **Frontend Architecture:** HTML5, JavaScript (ES6+), CSS3 custom properties
+- **Data Source:** Google Cloud Platform RSS/Atom Feed Service
 
 ---
 
-## 💻 Getting Started
+## Deployment & Setup
 
 ### Prerequisites
 
 - Python 3.x
-- \`pip\`
+- \`pip\` package manager
 
-### Local Setup
+### Local Environment Setup
 
-1. **Clone the Repository:**
+1. **Clone Repository:**
    \`\`\`bash
    git clone https://github.com/thatcoderdaniel/daniel-event-talks-app.git
    cd daniel-event-talks-app
    \`\`\`
 
-2. **Configure Virtual Environment & Install Dependencies:**
+2. **Initialize Virtual Environment & Install Dependencies:**
    \`\`\`bash
    python3 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install Flask
    \`\`\`
 
-3. **Run the Server:**
+3. **Start Flask Server:**
    \`\`\`bash
    python app.py
    \`\`\`
 
-4. **Access the App:**
-   Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your web browser.
+4. **Access UI:**
+   Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in a browser.
 
 ---
 
-## 📂 Project Structure
+## Directory Structure
 
 \`\`\`
 .
-├── app.py                  # Flask Application Server
+├── app.py                  # Server application router and parser core
 ├── templates/
-│   └── index.html          # Core Structured Dashboard
+│   └── index.html          # Frontend viewport structure
 ├── static/
-│   ├── style.css           # Glassmorphic Style Rules
-│   └── script.js           # Client Controller & Feed Parser
-└── README.md               # Project Documentation
+│   ├── style.css           # Global stylesheets and layout definitions
+│   └── script.js           # Frontend application controller and XML mapping logic
+└── README.md               # Project technical documentation
 \`\`\`
 
 ---
 
-## 📄 License
+## License
 
-This project is open-source and available under the MIT License.
+This project is licensed under the MIT License.
