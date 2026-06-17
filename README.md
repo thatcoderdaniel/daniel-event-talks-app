@@ -1,78 +1,64 @@
 # BigQuery Release Explorer
 
-A lightweight, real-time dashboard application designed to parse, aggregate, search, and export Google Cloud BigQuery release logs. Built on a Flask backend with a decoupled vanilla HTML5/JS/CSS3 frontend.
+Real-time parser and dashboard for Google Cloud BigQuery release notes. Flask backend, vanilla HTML5/JS/CSS3 frontend.
 
 ---
 
-## Key Features
+## Technical Features
 
-| Feature | Technical Description |
+| Feature | Implementation Details |
 | :--- | :--- |
-| **Live Feed Ingestion** | Asynchronous XML ingestion and parser mapping for official RSS/Atom documents. |
-| **Micro-Parsing** | Extracts atomic log segments from bulk day entries based on document boundaries (Features, Issues, Announcements, Deprecations). |
-| **Search & Filter** | Low-latency client-side indexing for keyword queries and state-based category filtering. |
-| **Theme Toggle** | Interoperable Light/Dark scheme selector with local state persistence. |
-| **Copy to Clipboard** | Clipboard API integration providing direct copy commands and visual state feedback. |
-| **Export to CSV** | Local MIME-type Blob generation to export filtered logs directly to local storage. |
-| **Bookmarking System** | Persistent bookmark state stored in local browser state. |
-| **Relative Dates** | Dynamic time-difference calculations rendering relative date offsets (Today, Yesterday, x days ago). |
-| **Offline Cache** | Local fallback buffer mapping cached feed logs when network fetch operations fail. |
-| **External Sharing** | Sanitized Web Intent routing mapping documentation links and snippet lengths to standard X sharing criteria. |
+| **Feed Ingestion** | Asynchronous RSS/Atom parsing via Python `xml.etree.ElementTree` |
+| **Entry Segmentation** | Client-side HTML parsing to isolate categorized updates (Feature, Issue, Announcement, Deprecation) |
+| **Search & Filter** | Client-side keyword index and category state filtering |
+| **Theme Toggle** | CSS root variables override with local storage persistence |
+| **Copy Action** | Clipboard API integration with temporary inline status |
+| **CSV Export** | Client-side Blob creation for local CSV downloads |
+| **Bookmarking** | Local storage state mapping for saved elements |
+| **Date Formatting** | Relative label calculations (Today, Yesterday, x days ago) |
+| **Offline Fallback** | Local storage cache mapping for network timeouts |
+| **External Sharing** | Sanitized Web Intent integration targeting X |
 
 ---
 
 ## Technical Stack
 
-- **Backend Run-time:** Python 3, Flask
-- **Frontend Architecture:** HTML5, JavaScript (ES6+), CSS3 custom properties
-- **Data Source:** Google Cloud Platform RSS/Atom Feed Service
+- **Backend:** Python 3, Flask
+- **Frontend:** HTML5, JavaScript (ES6+), CSS3 Variables
+- **Source Feed:** Google Cloud BigQuery RSS
 
 ---
 
 ## Deployment & Setup
 
-### Prerequisites
+```bash
+# Clone repository
+git clone https://github.com/thatcoderdaniel/daniel-event-talks-app.git
+cd daniel-event-talks-app
 
-- Python 3.x
-- \`pip\` package manager
+# Setup environment & dependencies
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install Flask
 
-### Local Environment Setup
-
-1. **Clone Repository:**
-   \`\`\`bash
-   git clone https://github.com/thatcoderdaniel/daniel-event-talks-app.git
-   cd daniel-event-talks-app
-   \`\`\`
-
-2. **Initialize Virtual Environment & Install Dependencies:**
-   \`\`\`bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install Flask
-   \`\`\`
-
-3. **Start Flask Server:**
-   \`\`\`bash
-   python app.py
-   \`\`\`
-
-4. **Access UI:**
-   Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in a browser.
+# Run application
+python app.py
+```
+Access the application viewport at `http://127.0.0.1:5000`.
 
 ---
 
 ## Directory Structure
 
-\`\`\`
-.
-├── app.py                  # Server application router and parser core
-├── templates/
-│   └── index.html          # Frontend viewport structure
+```
+├── app.py
+├── README.md
 ├── static/
-│   ├── style.css           # Global stylesheets and layout definitions
-│   └── script.js           # Frontend application controller and XML mapping logic
-└── README.md               # Project technical documentation
-\`\`\`
+│   ├── script.js
+│   └── style.css
+└── templates/
+    └── index.html
+```
 
 ---
 
