@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allUpdates = [];
     let activeFilter = 'all';
     let searchQuery = '';
+    let starredItems = JSON.parse(localStorage.getItem('starred_releases') || '[]');
 
     // DOM Elements
     const timeline = document.getElementById('timeline');
@@ -15,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-input');
     const filterButtons = document.querySelectorAll('.filter-btn');
     const statusBanner = document.getElementById('status-banner');
+    const scrollTopBtn = document.getElementById('scroll-top-btn');
     
     // Stats Elements
     const statTotal = document.getElementById('stat-total');
@@ -52,6 +54,19 @@ document.addEventListener('DOMContentLoaded', () => {
             searchInput.focus();
             searchInput.select();
         }
+    });
+
+    // Scroll to Top Button Visibility
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            scrollTopBtn.classList.add('show');
+        } else {
+            scrollTopBtn.classList.remove('show');
+        }
+    });
+
+    scrollTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
     // Parse RSS HTML content into typed items
@@ -97,7 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 temp.innerHTML = item.htmlContent;
                 const textContent = temp.innerText || '';
                 
+                // Unique ID based on entry date, type and content hash snippet
+                const itemId = `${entry.title}_${item.type}_${textContent.substring(0, 30).replace(/\s+/g, '_')}`;
+
                 allUpdates.push({
+                    id: itemId,
                     date: entry.title,
                     link: entry.link,
                     type: item.type,
@@ -127,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Helper to matches filter type
     function matchesFilter(item, filter) {
         if (filter === 'all') return true;
+        if (filter === 'starred') return starredItems.includes(item.id);
         const typeLower = item.type.toLowerCase();
         if (filter === 'Feature') return typeLower.includes('feature');
         if (filter === 'Issue') return typeLower.includes('issue') || typeLower.includes('fix');
@@ -162,6 +182,28 @@ document.addEventListener('DOMContentLoaded', () => {
                                item.date.toLowerCase().includes(query);
             return matchType && matchQuery;
         });
+    }
+
+    // Get relative date tags
+    function getRelativeDateLabel(dateStr) {
+        try {
+            const entryDate = new Date(dateStr);
+            if (isNaN(entryDate.getTime())) return '';
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            entryDate.setHours(0, 0, 0, 0);
+            
+            const diffTime = today - entryDate;
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return ' (Today)';
+            if (diffDays === 1) return ' (Yesterday)';
+            if (diffDays > 1 && diffDays <= 7) return ` (${diffDays} days ago)`;
+            return '';
+        } catch (e) {
+            return '';
+        }
     }
 
     // Render Timeline Feed
@@ -204,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             groupEl.className = 'timeline-group';
             
             // Date marker
+            const relLabel = getRelativeDateLabel(group.date);
             groupEl.innerHTML = `
                 <div class="timeline-date-marker">
                     <div class="timeline-dot">
@@ -212,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
                     </div>
-                    <span class="timeline-date-text">${group.date}</span>
+                    <span class="timeline-date-text">${group.date}${relLabel}</span>
                 </div>
                 <div class="timeline-cards"></div>
             `;
@@ -231,9 +274,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (typeLower.includes('announcement')) badgeClass = 'badge-announcement';
                 else if (typeLower.includes('deprecation')) badgeClass = 'badge-deprecation';
                 
+                const isStarred = starredItems.includes(item.id);
+
                 card.innerHTML = `
                     <div class="card-meta">
-                        <span class="badge ${badgeClass}">${item.type}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="badge ${badgeClass}">${item.type}</span>
+                            <button class="btn-star ${isStarred ? 'starred' : ''}" title="${isStarred ? 'Unstar update' : 'Star update'}">
+                                <svg class="star-icon" viewBox="0 0 24 24" width="16" height="16" fill="${isStarred ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                            </button>
+                        </div>
                         <div class="card-actions">
                             <button class="btn-copy" title="Copy text to clipboard">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -280,6 +332,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Tweet Button Event
                 card.querySelector('.btn-tweet').addEventListener('click', () => {
                     tweetUpdate(item.date, item.type, item.textContent, item.link);
+                });
+
+                // Bookmark/Star Button Event
+                const starBtn = card.querySelector('.btn-star');
+                starBtn.addEventListener('click', (e) => {
+                    const btn = e.currentTarget;
+                    const starSvg = btn.querySelector('.star-icon');
+                    const idx = starredItems.indexOf(item.id);
+                    if (idx > -1) {
+                        starredItems.splice(idx, 1);
+                        btn.classList.remove('starred');
+                        starSvg.setAttribute('fill', 'none');
+                        btn.setAttribute('title', 'Star update');
+                        showToast('Removed bookmark');
+                    } else {
+                        starredItems.push(item.id);
+                        btn.classList.add('starred');
+                        starSvg.setAttribute('fill', 'currentColor');
+                        btn.setAttribute('title', 'Unstar update');
+                        showToast('Added bookmark');
+                    }
+                    localStorage.setItem('starred_releases', JSON.stringify(starredItems));
+                    
+                    if (activeFilter === 'starred') {
+                        renderFeed();
+                    }
                 });
                 
                 cardsContainer.appendChild(card);
@@ -389,24 +467,35 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (result.status === 'success') {
                 processRawData(result.data);
+                // Save to local cache
+                localStorage.setItem('release_notes_cache', JSON.stringify(result.data));
                 showToast('Release notes loaded successfully.');
             } else {
                 throw new Error(result.message || 'Unknown backend error.');
             }
         } catch (error) {
             console.error(error);
-            showStatusBanner(`Failed to fetch release notes: ${error.message}. Please try again later.`, 'error');
-            timeline.innerHTML = `
-                <div class="no-results">
-                    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ef4444" stroke-width="1.5">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    <h4>Error Fetching Data</h4>
-                    <p>Unable to load release notes feed. Check backend logs or try again.</p>
-                </div>
-            `;
+            
+            // Try loading from Cache
+            const cachedData = localStorage.getItem('release_notes_cache');
+            if (cachedData) {
+                processRawData(JSON.parse(cachedData));
+                showStatusBanner('Viewing cached release notes (Offline Mode). Some data may be outdated.', 'info');
+                showToast('Loaded from offline cache.');
+            } else {
+                showStatusBanner(`Failed to fetch release notes: ${error.message}. Please try again later.`, 'error');
+                timeline.innerHTML = `
+                    <div class="no-results">
+                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ef4444" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <h4>Error Fetching Data</h4>
+                        <p>Unable to load release notes feed. Check backend logs or try again.</p>
+                    </div>
+                `;
+            }
         } finally {
             refreshIcon.classList.remove('spinning');
             refreshBtn.disabled = false;
