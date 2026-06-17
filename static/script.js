@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeline = document.getElementById('timeline');
     const refreshBtn = document.getElementById('refresh-btn');
     const refreshIcon = document.getElementById('refresh-icon');
+    const exportBtn = document.getElementById('export-btn');
     const searchInput = document.getElementById('search-input');
     const filterButtons = document.querySelectorAll('.filter-btn');
     const statusBanner = document.getElementById('status-banner');
@@ -115,11 +116,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return Object.values(groups);
     }
 
-    // Render Timeline Feed
-    function renderFeed() {
-        // Filter and Search
+    // Get currently filtered list of items
+    function getFilteredItems() {
         const query = searchQuery.toLowerCase().trim();
-        const filteredItems = allUpdates.filter(item => {
+        return allUpdates.filter(item => {
             const matchType = matchesFilter(item, activeFilter);
             const matchQuery = query === '' || 
                                item.textContent.toLowerCase().includes(query) || 
@@ -127,6 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                item.date.toLowerCase().includes(query);
             return matchType && matchQuery;
         });
+    }
+
+    // Render Timeline Feed
+    function renderFeed() {
+        const filteredItems = getFilteredItems();
 
         if (filteredItems.length === 0) {
             timeline.innerHTML = `
@@ -182,6 +187,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="card-meta">
                         <span class="badge ${badgeClass}">${item.type}</span>
                         <div class="card-actions">
+                            <button class="btn-copy" title="Copy text to clipboard">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                Copy
+                            </button>
                             <button class="btn-tweet" title="Share this update on X / Twitter">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
                                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -195,6 +207,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
                 
+                // Copy Button Event
+                card.querySelector('.btn-copy').addEventListener('click', () => {
+                    navigator.clipboard.writeText(item.textContent.replace(/\s+/g, ' ').trim());
+                    showToast('Copied to clipboard!');
+                });
+
                 // Tweet Button Event
                 card.querySelector('.btn-tweet').addEventListener('click', () => {
                     tweetUpdate(item.date, item.type, item.textContent, item.link);
@@ -223,6 +241,40 @@ document.addEventListener('DOMContentLoaded', () => {
         
         window.open(twitterUrl, '_blank', 'width=550,height=420,menubar=no,toolbar=no,scrollbars=yes');
         showToast('Opening Twitter/X share window...');
+    }
+
+    // Export to CSV Function
+    function exportToCSV() {
+        const filteredItems = getFilteredItems();
+
+        if (filteredItems.length === 0) {
+            showToast('No items to export.');
+            return;
+        }
+
+        let csvRows = [];
+        // Header Row
+        csvRows.push(['Date', 'Type', 'Content', 'Link'].map(h => `"${h.replace(/"/g, '""')}"`).join(','));
+        
+        filteredItems.forEach(item => {
+            const date = item.date;
+            const type = item.type;
+            const content = item.textContent.replace(/\s+/g, ' ').trim();
+            const link = item.link;
+            const row = [date, type, content, link].map(val => `"${val.replace(/"/g, '""')}"`);
+            csvRows.push(row.join(','));
+        });
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `bigquery_release_notes_${activeFilter}_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('CSV export downloaded!');
     }
 
     // Toast notifications helper
@@ -299,6 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup Event Listeners
     refreshBtn.addEventListener('click', fetchReleaseNotes);
+    exportBtn.addEventListener('click', exportToCSV);
     
     searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value;
